@@ -3,8 +3,8 @@ TARGET = $(BUILD)/mini-cube
 BUILD = build
 
 LIBS = -lSDL2 -I./src/include
-OBJS = $(BUILD)/main.o $(BUILD)/glad.o
-OBJS_DEBUG = $(BUILD)/debug/main.o $(BUILD)/debug/glad.o
+OBJS = $(BUILD)/main.o $(BUILD)/glad.o $(BUILD)/shader.o
+OBJS_DEBUG = $(BUILD)/debug/main.o $(BUILD)/debug/glad.o $(BUILD)/debug/shader.o
 
 debug: $(OBJS_DEBUG)
 	gcc $(LIBS) $^ -Wall -o $(TARGET)

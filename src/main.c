@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include <glad/glad.h>
+#include "shader.h"
 
 int main() {
     printf("Hello world!\n");
@@ -31,6 +32,39 @@ int main() {
     SDL_GLContext context = SDL_GL_CreateContext(window);
     gladLoadGLLoader(SDL_GL_GetProcAddress);
 
+    GLuint verShaderID, fragShaderID;
+
+    compileShader(&verShaderID, GL_VERTEX_SHADER, "assets/vertex.glsl");
+    compileShader(&fragShaderID, GL_FRAGMENT_SHADER, "assets/frag.glsl");
+
+    GLuint programID = linkShader(verShaderID, fragShaderID);
+
+    // Temp stuff ------------------------>
+    GLuint VertexArrayID;
+    glGenVertexArrays(1, &VertexArrayID);
+    glBindVertexArray(VertexArrayID);
+
+    // An array of 3 vectors which represents 3 vertices
+    static const GLfloat vertices[] = {
+        -0.5f, -0.5f, 0.0f,
+         0.5f, -0.5f, 0.0f,
+         0.0f,  0.5f, 0.0f,
+    };
+
+    GLuint VBO, VAO; 
+
+    // set up vertex buffer
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // set up vertex array object
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+
     int exited = 0;
 
     while (!exited) {
@@ -45,11 +79,16 @@ int main() {
             }
         }
 
-        glClearColor(0.f, 0.f, 0.5f, 0.f);
+        //glClearColor(0.f, 0.f, 0.5f, 1.f);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(programID);
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         SDL_GL_SwapWindow(window);
     }
 
     return 0;
 }
+
