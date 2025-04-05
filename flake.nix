@@ -29,7 +29,7 @@
 
               libGL
               glfw
-              glm
+              cglm
               #glew.dev
               SDL2
               SDL2.dev

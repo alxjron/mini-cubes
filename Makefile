@@ -1,15 +1,18 @@
 
 TARGET = $(BUILD)/mini-cube
 BUILD = build
+RELEASE = $(BUILD)/release
+DEBUG = $(BUILD)/debug
 
-LIBS = -lSDL2 -I./src/include
-OBJS = $(BUILD)/main.o $(BUILD)/glad.o $(BUILD)/shader.o
-OBJS_DEBUG = $(BUILD)/debug/main.o $(BUILD)/debug/glad.o $(BUILD)/debug/shader.o
+LIBS = -lSDL2 -lm -I./src/include
+OBJS = main.o glad.o shader.o mesh.o camera.o
+OBJS_RELEASE = $(addprefix $(RELEASE)/, $(OBJS))
+OBJS_DEBUG = $(addprefix $(DEBUG)/, $(OBJS));
 
 debug: $(OBJS_DEBUG)
 	gcc $(LIBS) $^ -Wall -o $(TARGET)
 
-release: $(OBJS)
+release: $(OBJS_RELEASE)
 	gcc $(LIBS) $^ -Wall -o $(TARGET)
 
 $(BUILD)/debug/%.o: src/%.c | dirs
@@ -21,7 +24,8 @@ $(BUILD)/%.o: src/%.c | dirs
 
 dirs:
 	mkdir -p $(BUILD)
-	mkdir -p $(BUILD)/debug
+	mkdir -p $(DEBUG)
+	mkdir -p $(RELEASE)
 
 clean:
 	rm -rf $(BUILD)
