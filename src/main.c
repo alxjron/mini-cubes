@@ -5,7 +5,11 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include <glad/glad.h>
+#include <cglm/struct.h>
+#include <cglm/util.h>
+
 #include "shader.h"
+#include "camera.h"
 
 int main() {
     printf("Hello world!\n");
@@ -29,7 +33,8 @@ int main() {
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     
-    SDL_GLContext context = SDL_GL_CreateContext(window);
+    //SDL_GLContext context = SDL_GL_CreateContext(window);
+    SDL_GL_CreateContext(window);
     gladLoadGLLoader(SDL_GL_GetProcAddress);
 
     GLuint verShaderID, fragShaderID;
@@ -38,6 +43,8 @@ int main() {
     compileShader(&fragShaderID, GL_FRAGMENT_SHADER, "assets/frag.glsl");
 
     GLuint programID = linkShader(verShaderID, fragShaderID);
+
+    Camera* cam = initCamera();
 
     // Temp stuff ------------------------>
     GLuint VertexArrayID;
@@ -65,6 +72,12 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
 
+    // Declare transform matrices
+    mat4s model = glms_mat4_identity();
+    glm_translate(model.raw, (vec3s) {.x = 0.0f, .y = 0.0f, .z = -3.0f}.raw);
+    mat4s view = glms_mat4_zero();
+    mat4s projection = glms_mat4_zero();
+
     int exited = 0;
 
     while (!exited) {
@@ -79,10 +92,23 @@ int main() {
             }
         }
 
-        //glClearColor(0.f, 0.f, 0.5f, 1.f);
+        glClearColor(0.3f, 0.3f, 0.6f, 1.f);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
+        // Set transform matrices
+        getView(cam, view.raw);
+        glm_perspective(glm_rad(60.0f), 1.0f, 0.1f, 100.0f, projection.raw);
+
         glUseProgram(programID);
+
+        GLuint modelLoc = glGetUniformLocation(programID, "model");
+        GLuint viewLoc = glGetUniformLocation(programID, "view");
+        GLuint projectionLoc = glGetUniformLocation(programID, "projection");
+
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model.raw[0][0]);
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view.raw[0][0]);
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection.raw[0][0]);
+
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
