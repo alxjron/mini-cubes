@@ -7,6 +7,7 @@
 #include <cglm/struct.h>
 #include <cglm/util.h>
 #include <cglm/struct.h>
+#include <cglm/vec3.h>
 
 /**
  * Helper function for setting up the front
@@ -20,7 +21,7 @@ void setFront(Camera* camPtr) {
     camPtr->front.x = cos(glm_rad(yaw)) * cos(glm_rad(pitch));
     camPtr->front.y = -sin(glm_rad(pitch));
     camPtr->front.z = sin(glm_rad(yaw)) * cos(glm_rad(pitch));
-    camPtr->front = glms_normalize(camPtr->front);
+    glm_normalize(camPtr->front.raw);
 }
 
 /**
@@ -57,5 +58,44 @@ void getView(Camera* camPtr, mat4 view) {
                  .y = camPtr->position.y + camPtr->front.y,
                  .z = camPtr->position.z + camPtr->front.z};
 
-    glm_look(camPtr->front.raw, dir.raw, camPtr->up.raw, view);
+    glm_lookat(camPtr->position.raw, dir.raw, camPtr->up.raw, view);
+}
+
+/**
+ * Updates the camera's rotation
+ * based on player events.
+ *
+ */
+void updateCameraLook(Camera *camPtr, SDL_Event event, float deltaTime) {
+    float sensitivity = 5.0f;
+
+    if (event.type == SDL_MOUSEMOTION) {
+        camPtr->yaw += event.motion.xrel * sensitivity * deltaTime;
+        camPtr->pitch += event.motion.yrel * sensitivity * deltaTime;
+
+        camPtr->pitch = glm_clamp(camPtr->pitch, -89.0f, 89.0f);
+    }
+}
+
+void updateCameraMovement(Camera *camPtr, float deltaTime) {
+    float speed = 5.0f;
+    vec3s direction = {.x = 0.0f, .y = 0.0f, .z = 0.0f};
+
+    const Uint8* keyState = SDL_GetKeyboardState(NULL);
+
+    if (keyState[SDL_SCANCODE_W]) 
+        direction.z = 1.0f;
+    else if (keyState[SDL_SCANCODE_S])
+        direction.z = -1.0f;
+
+    if (keyState[SDL_SCANCODE_D]) 
+        direction.x = 1.0f;
+    else if (keyState[SDL_SCANCODE_A])
+        direction.x = -1.0f;
+
+    float frontMove = speed * deltaTime * direction.z;
+    float sideMove = speed * deltaTime * direction.x;
+
+    glm_vec3_add(glms_vec3_mul(glms_vec3_normalize(glms_vec3_cross(camPtr->front, camPtr->up)), (vec3s) {.x = sideMove, .y = 0.0f, .z = sideMove}).raw, camPtr->position.raw, camPtr->position.raw);
+    glm_vec3_add(glms_vec3_mul(camPtr->front, (vec3s) {.x = frontMove, .y = 0.0f, .z = frontMove}).raw, camPtr->position.raw, camPtr->position.raw);
 }

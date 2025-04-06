@@ -17,6 +17,7 @@ Camera* initCamera();
 
 void getView(Camera* camPtr, mat4 view);
 
-void updateCamera(Camera* camPtr, SDL_Event event, float deltaTime);
+void updateCameraLook(Camera* camPtr, SDL_Event event, float deltaTime);
+void updateCameraMovement(Camera* camPtr, float deltaTime);
 
 #endif

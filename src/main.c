@@ -74,23 +74,31 @@ int main() {
 
     // Declare transform matrices
     mat4s model = glms_mat4_identity();
-    glm_translate(model.raw, (vec3s) {.x = 0.0f, .y = 0.0f, .z = -3.0f}.raw);
+    glm_translate(model.raw, (vec3s) {.x = 0.0f, .y = 0.0f, .z = -2.0f}.raw);
     mat4s view = glms_mat4_zero();
     mat4s projection = glms_mat4_zero();
+
+    SDL_SetRelativeMouseMode(SDL_TRUE);
+    Uint32 lastUpdate = SDL_GetTicks();
 
     int exited = 0;
 
     while (!exited) {
+        Uint32 current = SDL_GetTicks();
+        float deltaTime = (current - lastUpdate) / 1000.0f;
 
         glViewport(0, 0, 800, 800);
     
         SDL_Event event;
 
-        if (SDL_PollEvent(&event)) {
+        while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 exited = 1;
             }
+            updateCameraLook(cam, event, deltaTime);
         }
+
+        updateCameraMovement(cam, deltaTime);
 
         glClearColor(0.3f, 0.3f, 0.6f, 1.f);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -113,6 +121,7 @@ int main() {
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         SDL_GL_SwapWindow(window);
+        lastUpdate = current;
     }
 
     return 0;
