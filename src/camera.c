@@ -63,7 +63,7 @@ void getView(Camera* camPtr, mat4 view) {
 
 /**
  * Updates the camera's rotation
- * based on player events.
+ * based on player mouse events.
  *
  */
 void updateCameraLook(Camera *camPtr, SDL_Event event, float deltaTime) {
@@ -77,6 +77,11 @@ void updateCameraLook(Camera *camPtr, SDL_Event event, float deltaTime) {
     }
 }
 
+/**
+ * Updates the camera's position 
+ * based on keyboard input.
+ *
+ */
 void updateCameraMovement(Camera *camPtr, float deltaTime) {
     float speed = 5.0f;
     vec3s direction = {.x = 0.0f, .y = 0.0f, .z = 0.0f};
@@ -93,9 +98,17 @@ void updateCameraMovement(Camera *camPtr, float deltaTime) {
     else if (keyState[SDL_SCANCODE_A])
         direction.x = -1.0f;
 
+    if (keyState[SDL_SCANCODE_SPACE])
+        direction.y = 1.0f;
+
+    else if (keyState[SDL_SCANCODE_LSHIFT])
+        direction.y = -1.0f;
+
     float frontMove = speed * deltaTime * direction.z;
     float sideMove = speed * deltaTime * direction.x;
+    float yMove = speed * deltaTime * direction.y;
 
     glm_vec3_add(glms_vec3_mul(glms_vec3_normalize(glms_vec3_cross(camPtr->front, camPtr->up)), (vec3s) {.x = sideMove, .y = 0.0f, .z = sideMove}).raw, camPtr->position.raw, camPtr->position.raw);
     glm_vec3_add(glms_vec3_mul(camPtr->front, (vec3s) {.x = frontMove, .y = 0.0f, .z = frontMove}).raw, camPtr->position.raw, camPtr->position.raw);
+    glm_vec3_add(camPtr->position.raw, (vec3s) {.x = 0.0f, .y = yMove, .z = 0.0f}.raw, camPtr->position.raw);
 }

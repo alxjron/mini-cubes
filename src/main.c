@@ -10,6 +10,7 @@
 
 #include "shader.h"
 #include "camera.h"
+#include "mesh.h"
 
 int main() {
     printf("Hello world!\n");
@@ -46,31 +47,64 @@ int main() {
 
     Camera* cam = initCamera();
 
-    // Temp stuff ------------------------>
-    GLuint VertexArrayID;
-    glGenVertexArrays(1, &VertexArrayID);
-    glBindVertexArray(VertexArrayID);
+    // Test mesh
+    Mesh* test = initMesh();
 
-    // An array of 3 vectors which represents 3 vertices
-    static const GLfloat vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f,
+    Vertex verts[] = {
+        /*
+         * 0 -------- 1
+         *   |      |
+         *   |      |
+         *   |      |
+         * 2 -------- 3
+         *
+         * 4 -------- 5
+         *   |      |
+         *   |      |
+         *   |      |
+         * 6 -------- 7
+         *
+         *
+         */
+        (Vertex) {.pos = {-0.5f, 0.5f, 0.5f}},
+        (Vertex) {.pos = {0.5f, 0.5f, 0.5f}},
+        (Vertex) {.pos = {-0.5f, -0.5f, 0.5f}},
+        (Vertex) {.pos = {0.5f, -0.5f, 0.5f}},
+
+        (Vertex) {.pos = {-0.5f, 0.5f, -0.5f}},
+        (Vertex) {.pos = {0.5f, 0.5f, -0.5f}},
+        (Vertex) {.pos = {-0.5f, -0.5f, -0.5f}},
+        (Vertex) {.pos = {0.5f, -0.5f, -0.5f}},
     };
 
-    GLuint VBO, VAO; 
+    GLuint elems[] = {
+        // Front
+        0, 1, 3,
+        0, 3, 2,
 
-    // set up vertex buffer
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(vertices), vertices, GL_STATIC_DRAW);
+        // Left
+        4, 0, 2,
+        4, 2, 6,
 
-    // set up vertex array object
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+        // Right
+        1, 5, 7,
+        1, 7, 3,
+
+        // Back
+        7, 5, 4, 
+        7, 4, 6, 
+
+        // Top
+        0, 4, 5,
+        0, 5, 1,
+
+        // Bottom
+        2, 3, 7,
+        2, 7, 6,
+    };
+
+    setMeshVertPointer(test, verts, 8);
+    setMeshElemPointer(test, elems, 36);
 
     // Declare transform matrices
     mat4s model = glms_mat4_identity();
@@ -117,8 +151,8 @@ int main() {
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view.raw[0][0]);
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection.raw[0][0]);
 
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        // Draw meshes
+        drawMesh(*test);
 
         SDL_GL_SwapWindow(window);
         lastUpdate = current;
