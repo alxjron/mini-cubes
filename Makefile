@@ -5,7 +5,7 @@ RELEASE = $(BUILD)/release
 DEBUG = $(BUILD)/debug
 
 LIBS = -lSDL2 -lm -I./src/include
-OBJS = main.o glad.o shader.o mesh.o camera.o
+OBJS = main.o glad.o shader.o mesh.o camera.o region.o
 OBJS_RELEASE = $(addprefix $(RELEASE)/, $(OBJS))
 OBJS_DEBUG = $(addprefix $(DEBUG)/, $(OBJS));
 

@@ -11,6 +11,7 @@
 #include "shader.h"
 #include "camera.h"
 #include "mesh.h"
+#include "region.h"
 
 int main() {
     printf("Hello world!\n");
@@ -47,64 +48,9 @@ int main() {
 
     Camera* cam = initCamera();
 
-    // Test mesh
-    Mesh* test = initMesh();
-
-    Vertex verts[] = {
-        /*
-         * 0 -------- 1
-         *   |      |
-         *   |      |
-         *   |      |
-         * 2 -------- 3
-         *
-         * 4 -------- 5
-         *   |      |
-         *   |      |
-         *   |      |
-         * 6 -------- 7
-         *
-         *
-         */
-        (Vertex) {.pos = {-0.5f, 0.5f, 0.5f}},
-        (Vertex) {.pos = {0.5f, 0.5f, 0.5f}},
-        (Vertex) {.pos = {-0.5f, -0.5f, 0.5f}},
-        (Vertex) {.pos = {0.5f, -0.5f, 0.5f}},
-
-        (Vertex) {.pos = {-0.5f, 0.5f, -0.5f}},
-        (Vertex) {.pos = {0.5f, 0.5f, -0.5f}},
-        (Vertex) {.pos = {-0.5f, -0.5f, -0.5f}},
-        (Vertex) {.pos = {0.5f, -0.5f, -0.5f}},
-    };
-
-    GLuint elems[] = {
-        // Front
-        0, 1, 3,
-        0, 3, 2,
-
-        // Left
-        4, 0, 2,
-        4, 2, 6,
-
-        // Right
-        1, 5, 7,
-        1, 7, 3,
-
-        // Back
-        7, 5, 4, 
-        7, 4, 6, 
-
-        // Top
-        0, 4, 5,
-        0, 5, 1,
-
-        // Bottom
-        2, 3, 7,
-        2, 7, 6,
-    };
-
-    setMeshVertPointer(test, verts, 8);
-    setMeshElemPointer(test, elems, 36);
+    // Test region
+    Region* test = initRegion((vec3s) {.x = 0.0f, .y = 0.0f, .z = 0.0f});
+    fillRegion("1", test);
 
     // Declare transform matrices
     mat4s model = glms_mat4_identity();
@@ -152,7 +98,7 @@ int main() {
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection.raw[0][0]);
 
         // Draw meshes
-        drawMesh(*test);
+        drawMesh(*(test->meshPtr));
 
         SDL_GL_SwapWindow(window);
         lastUpdate = current;
