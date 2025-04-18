@@ -52,11 +52,60 @@ int fillRegion(char* cubeID, Region* regPtr) {
     regPtr->regType = FILLED;
 
     // Only 1 string list
-    char** newData = malloc(strlen(cubeID) + 1);
+    char** newData = malloc(sizeof(char*));
     newData[0] = cubeID;
 
     free(regPtr->data);
     regPtr->data = newData;
+
+    // update ourselves
+    updateRegionMesh(regPtr);
+
+    // update all neighbors
+    updateRegionMesh(regPtr->up);
+    updateRegionMesh(regPtr->down);
+    updateRegionMesh(regPtr->left);
+    updateRegionMesh(regPtr->right);
+    updateRegionMesh(regPtr->front);
+    updateRegionMesh(regPtr->back);
+
+    return 1;
+}
+
+int setMCube(char* cubeID, Region* regPtr, vec3s pos) {
+    int x = floorf(pos.x);
+    int y = floorf(pos.y);
+    int z = floorf(pos.z);
+
+    char* mcubeAtPos = getMCube(regPtr, x, y, z);
+
+    // If there is already a mini cube there
+    // of the same ID
+    if (strcmp(mcubeAtPos, cubeID) == 0) 
+        return 0;
+
+    // Need to convert from filled to
+    // mcubed
+    if (regPtr->regType == FILLED) {
+        char* fillCubeID = *(regPtr->data);
+
+        // list of all minicubes
+        char** newData = malloc(REGION_MCUBE_DEPTH * REGION_MCUBE_DEPTH * REGION_MCUBE_DEPTH * sizeof(char*));
+
+        for (int i = 0; i < REGION_MCUBE_DEPTH * REGION_MCUBE_DEPTH * REGION_MCUBE_DEPTH; i++)
+            newData[i] = fillCubeID;
+
+        free(regPtr->data);
+        regPtr->data = newData;
+        regPtr->regType = MCUBED;
+    }
+    // Need to convert from cubed to
+    // mcubed
+    else if (regPtr->regType == CUBED) {
+    }
+
+    // Set the value
+    regPtr->data[x + z * REGION_MCUBE_DEPTH + y * REGION_MCUBE_DEPTH * REGION_MCUBE_DEPTH] = cubeID;
 
     // update ourselves
     updateRegionMesh(regPtr);
@@ -81,19 +130,13 @@ void updateRegionMesh(Region* reg) {
 
     int x, y, z;
 
-    /**
-     * Note: y starts at the top of a region
-     * and goes down
-     *
-     */
-
     for (y = 0; y < REGION_MCUBE_DEPTH; y++) {
         for (x = 0; x < REGION_MCUBE_DEPTH; x++) {
             for (z = 0; z < REGION_MCUBE_DEPTH; z++) {
                 float rx, ry, rz;
-                rx = 0.25 * (float) x;
-                ry = -0.25 * (float) y;
-                rz = 0.25 * (float) z;
+                rx = (0.25f * (float) x) + reg->meshPtr->position.x;
+                ry = (0.25f * (float) y) + reg->meshPtr->position.y;
+                rz = (0.25f * (float) z) + reg->meshPtr->position.z;
                 vec3s pos = {.x = rx, .y = ry, .z = rz};
 
                 // If the current cube is air
@@ -107,7 +150,7 @@ void updateRegionMesh(Region* reg) {
                 if (strcmp(getMCube(reg, x, y - 1, z), AIR_CUBE) == 0)
                     addFace(reg->meshPtr, BOTTOM, pos, 0.25f);
                 // Front is air
-                if (strcmp(getMCube(reg, x, y, z + 1), AIR_CUBE) == 0)
+                if (strcmp(getMCube(reg, x, y, z + 1), AIR_CUBE) == 0) 
                     addFace(reg->meshPtr, FRONT, pos, 0.25f);
                 // Back is air
                 if (strcmp(getMCube(reg, x, y, z - 1), AIR_CUBE) == 0)
@@ -121,6 +164,102 @@ void updateRegionMesh(Region* reg) {
             }
         }
     }
+}
+
+int connectRegions(Region* src, Region* dest, enum CubeFace face) {
+    if (src == NULL || dest == NULL)
+        return 0;
+
+    switch (face) {
+        case FRONT:
+            if (src->front != NULL || dest->back != NULL)
+                return 0;
+            src->front = dest;
+            dest->back = src;
+            return 1; 
+        case BACK:
+            if (src->back != NULL || dest->front != NULL)
+                return 0;
+            src->back = dest;
+            dest->front = src;
+            return 1;
+        case LEFT:
+            if (src->left != NULL || dest->right != NULL)
+                return 0;
+            src->left = dest;
+            dest->right = src;
+            return 1;
+        case RIGHT:
+            if (src->right != NULL || dest->left != NULL)
+                return 0;
+            src->right = dest;
+            dest->left = src;
+            return 1;
+        case TOP:
+            if (src->up != NULL || dest->down != NULL)
+                return 0;
+            src->up = dest;
+            dest->down = src;
+            return 1;
+        case BOTTOM:
+            if (src->down != NULL || dest->up != NULL)
+                return 0;
+            src->down = dest;
+            dest->up = src;
+            return 1;
+    }
+    return 0;
+}
+
+int detachRegions(Region* src, Region* reg) {
+    if (src == NULL || reg == NULL)
+        return 0;
+
+    enum CubeFace face;
+
+    if (src->front == reg)
+        face = FRONT;
+    else if (src->back == reg)
+        face = BACK;
+    else if (src->left == reg)
+        face = LEFT;
+    else if (src->right == reg)
+        face = RIGHT;
+    else if (src->up == reg)
+        face = TOP;
+    else if (src->down == reg)
+        face = BOTTOM;
+    else 
+        return 0;
+
+    switch (face) {
+        case FRONT:
+            src->front = NULL;
+            reg->back = NULL;
+            return 1; 
+        case BACK:
+            src->back = NULL;
+            reg->front = NULL;
+            return 1;
+        case LEFT:
+            src->left = NULL;
+            reg->right = NULL;
+            return 1;
+        case RIGHT:
+            src->right = NULL;
+            reg->left = NULL;
+            return 1;
+        case TOP:
+            src->up = NULL;
+            reg->down = NULL;
+            return 1;
+        case BOTTOM:
+            src->down = NULL;
+            reg->up = NULL;
+            return 1;
+    }
+
+    return 0;
 }
 
 char* getMCubeHelper(Region* reg, int x, int y, int z, int iter);
@@ -153,12 +292,11 @@ char* getMCubeHelper(Region* reg, int x, int y, int z, int iter) {
         return getMCubeHelper(reg->left, x + REGION_MCUBE_DEPTH, y, z, iter + 1);
     }
 
-    // Yes Y is flipped because I decided that
-    // y = 0 starts at the very top
-    if (y > 0) {
-        return getMCubeHelper(reg->up, x, y - REGION_MCUBE_DEPTH, z, iter + 1);
+    // Y
+    if (y >= REGION_MCUBE_DEPTH) {
+        return getMCubeHelper(reg->up, x, REGION_MCUBE_DEPTH - y, z, iter + 1);
     }
-    else if (y <= -REGION_MCUBE_DEPTH) {
+    else if (y < 0) {
         return getMCubeHelper(reg->down, x, y + REGION_MCUBE_DEPTH, z, iter + 1);
     }
 

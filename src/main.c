@@ -48,13 +48,28 @@ int main() {
 
     Camera* cam = initCamera();
 
-    // Test region
+    // Test regions
     Region* test = initRegion((vec3s) {.x = 0.0f, .y = 0.0f, .z = 0.0f});
+    Region* testfront = initRegion((vec3s) {.x = 0.0f, .y = 0.0f, .z = 8.0f});
+    Region* testback = initRegion((vec3s) {.x = 0.0f, .y = 0.0f, .z = -8.0f});
+    Region* testleft = initRegion((vec3s) {.x = -8.0f, .y = 0.0f, .z = 0.0f});
+    Region* testright = initRegion((vec3s) {.x = 8.0f, .y = 0.0f, .z = 0.0f});
+
+    connectRegions(test, testfront, FRONT);
+    connectRegions(test, testback, BACK);
+    connectRegions(test, testleft, LEFT);
+    connectRegions(test, testright, RIGHT);
+
     fillRegion("1", test);
+    //fillRegion("1", testfront);
+    setMCube("1", testfront, (vec3s) {.x = 0.0f, .y = 0.0f, .z = 0.0f});
+    fillRegion("1", testback);
+    fillRegion("1", testleft);
+    fillRegion("1", testright);
 
     // Declare transform matrices
     mat4s model = glms_mat4_identity();
-    glm_translate(model.raw, (vec3s) {.x = 0.0f, .y = 0.0f, .z = -2.0f}.raw);
+    glm_translate(model.raw, (vec3s) {.x = 0.0f, .y = -16.0f, .z = 0.0f}.raw);
     mat4s view = glms_mat4_zero();
     mat4s projection = glms_mat4_zero();
 
@@ -99,6 +114,10 @@ int main() {
 
         // Draw meshes
         drawMesh(*(test->meshPtr));
+        drawMesh(*(testfront->meshPtr));
+        drawMesh(*(testback->meshPtr));
+        drawMesh(*(testleft->meshPtr));
+        drawMesh(*(testright->meshPtr));
 
         SDL_GL_SwapWindow(window);
         lastUpdate = current;

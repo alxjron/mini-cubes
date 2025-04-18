@@ -33,6 +33,20 @@ typedef struct _region {
 Region* initRegion(vec3s pos);
 
 /**
+ * Simply connects the two regions to each other.
+ *
+ * Returns 1 if success, 0 otherwise.
+ */
+int connectRegions(Region* src, Region* dest, enum CubeFace face);
+
+/**
+ * Finds and detaches a neighboring region.
+ *
+ * Returns 1 if success, 0 otherwise.
+ */
+int detachRegions(Region* src, Region* reg);
+
+/**
  * Functions for setting the region
  * data.
  *
